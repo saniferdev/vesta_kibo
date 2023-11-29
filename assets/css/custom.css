@@ -1,0 +1,22 @@
+button.btn.btn-custom.submit-login {
+    margin-top: 20px;
+}
+.glyphicon-ok:before {
+    content: "\e013";
+}
+.glyphicon {
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    font-family: 'Glyphicons Halflings';
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+.alert-warning {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
