@@ -1,17 +1,8 @@
 <?php
 
-ini_set('display_errors', 0); 
-ini_set('display_startup_errors', 0); 
-error_reporting(0);
-
-$url_soap                = "http://192.168.130.55:8124/soap-wsdl/syracuse/collaboration/syracuse/CAdxWebServiceXmlCC?wsdl";
-
-$login                   = 'admin';
-$password                = 'mW33Yjf8q88Bex';
-$codeLang                = 'FRA';
-$poolAlias               = 'PROD';
-
-$codeFamille             = '070';
+ini_set('display_errors', 1); 
+ini_set('display_startup_errors', 1); 
+error_reporting(-1);
 
 $sqlServerHost           = '192.168.130.50\TALYS';
 $sqlServerDatabase       = 'x3v12prod';
@@ -23,7 +14,6 @@ $link                    = sqlsrv_connect($sqlServerHost, $connectionInfo);
 if (!$link) {
      die( print_r( sqlsrv_errors(), true));
 }
-
 
 $sqlServerHost2          = '192.168.130.64';
 $sqlServerDatabase2      = 'KIBO';

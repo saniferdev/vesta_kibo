@@ -14,7 +14,7 @@ class Member
 
     public function getMember($username)
     {
-        $query = 'SELECT * FROM tbl_member where username = ?';
+        $query = 'SELECT * FROM inv_member where username = ?';
         $paramType = 's';
         $paramValue = array(
             $username
@@ -46,7 +46,7 @@ class Member
             $_SESSION["type"]       = $memberRecord[0]["type"];
             $_SESSION["groupe"]     = $memberRecord[0]["groupe"];
             session_write_close();
-            $url = "sortie.php";
+            $url = "inv.php";
             header("Location: $url");
         } else if ($loginPassword == 0) {
             $loginStatus = "Erreur d'authentification.";

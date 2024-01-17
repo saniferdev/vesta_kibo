@@ -291,7 +291,7 @@ select:focus {
 
 .section {
   padding-top: 10px;
-  padding-bottom: 80px
+  padding-bottom: 10px
 }
 
 @media(max-width:768px) {
@@ -1033,7 +1033,7 @@ select.custom-select, .dataTables_filter input{border: 1px solid #3598dc !import
 
 #loading-image {
   position: absolute;
-  top: 28%;
+  top: 20%;
   left: 34%;
 
 }
@@ -1166,6 +1166,7 @@ h3.text-titre {
     color: #138496;
     text-align: left;
     text-transform: uppercase;
+    margin-top: 15px;
 }
 
 a.active {
@@ -1223,3 +1224,9 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     background-color: #fff;
     font-size: 10px;
 }
+.jaune{color:#ffc107!important}
+td a.delete {
+  color: #E34724 !important;
+  width: 0;
+}
+.bold{font-weight: bold;}

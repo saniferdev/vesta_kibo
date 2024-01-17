@@ -5,112 +5,23 @@ Class API{
     public $link;
     public $link2;
     public $site;
+    public $user;
 
-    public function getDetailArticle($recherche){
-        $w = "";
-        if(is_array($recherche)){
-            $recherche  = implode("','",$recherche);
-        }
-        else{
-            $w = "  OR UPPER(IM.ITMREF_0) LIKE '%".strtoupper($recherche)."%'
-                    OR UPPER(IM.ITMDES1_0) LIKE '%".strtoupper($recherche)."%'
-                    OR UPPER(IM.YBPSEAN_0) LIKE '%".strtoupper($recherche)."%'
-                    OR UPPER(IB.BPSNUM_0) LIKE '%".strtoupper($recherche)."%'
-                    OR UPPER(BPS.BPSNAM_0) LIKE '%".strtoupper($recherche)."%'
-                    OR UPPER(IB.ITMREFBPS_0) LIKE '%".strtoupper($recherche)."%' ";
-        }
-
+    public function getInv($num){
         $queryParams    = $data = array();
         $queryOptions   = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
         $query          = " SELECT 
-                                CASE WHEN 
-                                    ZB.ITMREF_0 IS NOT NULL
-                                    THEN 
-                                        ZB.CPNITMREF_0 
-                                    ELSE
-                                        IM.ITMREF_0
-                                    END AS REF
-                                ,CASE WHEN 
-                                    ZB.ITMREF_0 IS NOT NULL
-                                    THEN 
-                                        (SELECT ITMDES1_0 FROM [ZITMMASTER] WHERE ITMREF_0 = ZB.CPNITMREF_0 )
-                                    ELSE
-                                        IM.ITMDES1_0
-                                    END AS DESS
-                                ,IM.TSICOD_1 AS FAM
-                                ,IM.TSICOD_2 AS FAM2
-                                ,IM.TSICOD_3 AS FAM3
-                                ,CASE WHEN 
-                                    ZB.ITMREF_0 IS NOT NULL
-                                    THEN 
-                                        (SELECT ISNULL(YBPSEAN_0,'') FROM [ZITMMASTER] WHERE ITMREF_0 = ZB.CPNITMREF_0 )
-                                    ELSE
-                                        ISNULL(IM.YBPSEAN_0,'')
-                                    END AS CB
-                                ,ISNULL(IB.BPSNUM_0,'') AS FOURN
-                                ,ISNULL(BPS.BPSNAM_0,'') AS FOURNN
-                                ,CASE WHEN 
-                                    ZB.ITMREF_0 IS NOT NULL
-                                    THEN 
-                                        (SELECT ISNULL(ITMREFBPS_0,'') FROM [ZITMBPS] WHERE ITMREF_0 = ZB.CPNITMREF_0 AND DEFBPSFLG_0 = 2)
-                                    ELSE
-                                        ISNULL(IB.ITMREFBPS_0,'')
-                                    END AS REF_F
-                                ,SP.PRI_0 AS PV_TTC
-                                ,ISNULL(IM.STU_0,'') AS UN
-                                ,CONVERT(VARCHAR, ZL.SHLDAT_0, 103) AS DAT_P
-                                ,ISNULL(ZL.LOT_0,'') AS LOT
-                                ,ISNULL(ZST.QTYSTU_0,0) * CASE WHEN 
-                                                            ZB.ITMREF_0 IS NOT NULL
-                                                            THEN 
-                                                                ZB.LIKQTY_0
-                                                            ELSE
-                                                                1
-                                                            END AS QTE
-                                ,ISNULL(ZST.LOC_0,'') AS EMPL
-                                ,ISNULL(ZST.LOCTYP_0,'') AS EMPL_T
-                                
+                                *
                             FROM 
-                                [ZITMMASTER] IM
-                                INNER JOIN ZSOUSFAMILLE ZF ON ZF.SOUSFAM = IM.TSICOD_1
-                                LEFT JOIN [ZITMBPS] IB ON IB.ITMREF_0 = IM.ITMREF_0 AND IB.DEFBPSFLG_0 = 2
-                                LEFT JOIN [ZBPSUPPLIER] BPS ON BPS.BPSNUM_0 = IB.BPSNUM_0
-                                LEFT JOIN [ZSPRICLIST] SP ON SP.PLICRI1_0 = IM.ITMREF_0 AND SP.PLI_0 = 'TGEN'
-                                LEFT JOIN [ZBOMD] ZB ON ZB.ITMREF_0 = IM.ITMREF_0
-                                LEFT JOIN [ZSTOLOT] ZL ON ZL.ITMREF_0 = IM.ITMREF_0
-                                INNER JOIN [ZSTOCK] ZST ON ZST.ITMREF_0 = ZL.ITMREF_0 AND ZL.LOT_0 = ZST.LOT_0 AND ZST.QTYSTU_0 > 0 AND ZST.STOFCY_0 = '".$this->site."'
-
+                                invEntete invE
+                                INNER JOIN invSession invL ON invL.nLigne = invE.nLigne
                             WHERE
-                                ZF.FAM IN ('50', '51', '52','60','61','62','63','64','65')
-                                AND ( 
-                                        IM.ITMREF_0 IN ('".$recherche."')
-                                        ".$w."
-                                    ) 
-                            GROUP BY 
-                                ZB.ITMREF_0
-                                ,ZB.CPNITMREF_0
-                                ,IM.ITMREF_0
-                                ,IM.ITMDES1_0
-                                ,IM.TSICOD_1
-                                ,IM.TSICOD_2
-                                ,IM.TSICOD_3
-                                ,IM.YBPSEAN_0
-                                ,IB.BPSNUM_0
-                                ,BPS.BPSNAM_0
-                                ,IB.ITMREFBPS_0
-                                ,SP.PRI_0
-                                ,IM.STU_0
-                                ,ZL.SHLDAT_0
-                                ,ZL.LOT_0
-                                ,ZST.QTYSTU_0
-                                ,ZST.LOC_0
-                                ,ZST.LOCTYP_0
-                                ,ZB.LIKQTY_0
+                                invE.site = '".$this->site."'
+                                AND (invE.nEntete = '".$num."' OR invE.nLigne = '".$num."')
                             ORDER BY
-                                ZST.LOCTYP_0";
-        //echo $query;
+                                invL.ligne ASC ";
 
-        $resultat       = sqlsrv_query($this->link, $query, $queryParams, $queryOptions);
+        $resultat       = sqlsrv_query($this->link2, $query, $queryParams, $queryOptions);
         if ($resultat == FALSE) {
             var_dump(sqlsrv_errors());
             return false;
@@ -124,23 +35,29 @@ Class API{
         return $data;
     }
 
-    public function getSortie($d,$f){
+    public function getInvE($num){
         $queryParams    = $data = array();
         $queryOptions   = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
         $query          = " SELECT 
-                                * 
+                                'E' AS 'A'
+                                ,[nEntete] AS 'B'
+                                ,[site] AS 'C'
+                                ,'' AS D
+                                ,'' AS E
+                                ,'' AS G
+                                ,'' AS H
+                                ,'' AS I
+                                ,'' AS J
+                                ,'' AS K
+                                ,'' AS L
+                                ,'' AS M
+                                ,'' AS N
                             FROM 
-                                [x3v12prod].dbo.ZSORTIE_CASSE
-                                --[x3v12prod].dbo.ZSORTIECASSE_BAS
-
+                                invEntete 
                             WHERE
-                                CAST(DATES AS DATE) BETWEEN '".$d."' AND '".$f."'
-                           
-                            ORDER BY 
-                              DATES
-                              ,NUM";
+                                nLigne = '".$num."' ";
 
-        $resultat       = sqlsrv_query($this->link, $query, $queryParams, $queryOptions);
+        $resultat       = sqlsrv_query($this->link2, $query, $queryParams, $queryOptions);
         if ($resultat == FALSE) {
             var_dump(sqlsrv_errors());
             return false;
@@ -150,225 +67,365 @@ Class API{
             while($row = sqlsrv_fetch_array($resultat, SQLSRV_FETCH_ASSOC)){
                 $data[] = $row;
             }
-        }
-        return $data;
+            return $data;
+        }        
     }
-
-    public function getNomenclatureArticle($recherche){
+    public function getInvL($num){
         $queryParams    = $data = array();
         $queryOptions   = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
-        $query          = " SELECT ITMREF_0 FROM [ZBOMD] WHERE ITMREF_0 = '".$recherche."' ";
+        $query          = " SELECT 
+                                'L' AS 'A'
+                                ,[nLigne] AS 'B'
+                                ,'' AS C
+                                ,'' AS D
+                                ,'' AS E
+                                ,'' AS G
+                                ,'' AS H
+                                ,'' AS I
+                                ,'' AS J
+                                ,'' AS K
+                                ,'' AS L
+                                ,'' AS M
+                                ,'' AS N
+                            FROM 
+                                invEntete 
+                            WHERE
+                                nLigne = '".$num."' ";
 
-        $resultat       = sqlsrv_query($this->link, $query, $queryParams, $queryOptions);
+        $resultat       = sqlsrv_query($this->link2, $query, $queryParams, $queryOptions);
         if ($resultat == FALSE) {
             var_dump(sqlsrv_errors());
             return false;
         } elseif (sqlsrv_num_rows($resultat) == 0) {
-            return 0;
+            return false;
         } else {
-            return 1;
-        }
-    }
-
-    public function preg_replace_($xml){
-        $xml = preg_replace("/\n/", "", $xml);
-        $xml = preg_replace("/>\s*</", "><", $xml);
-        return $xml;
-    }
-
-    public function soap_API($ref,$emp,$lot,$qte,$date){
-        $soapClient = new SoapClient(
-            $this->url_soap,
-            array(
-                'trace'    => true,
-                'login'    => $this->login,
-                'password' => $this->password,
-            )
-        );
-        $m          = "";
-        $context    = array('codeLang'=>$this->codeLang, 'poolAlias'=>$this->poolAlias,'poolId'=>'','requestConfig'=>'adxwss.trace.on=on&adxwss.trace.size=16384&adonix.trace.on=on&adonix.trace.level=3&adonix.trace.size=8');
-
-        $inputXml   = $this->ligne($ref,$emp,$lot,$qte,$date);
-
-        $result     = $soapClient->__call("run",array($context,'YWSMAJSTO',$inputXml));
-        $xml        = simplexml_load_string($result->resultXml);
-
-        $message    = $xml->GRP[1];
-
-        foreach ($message as $val) {
-            $m = $val;
-        }
-
-        return $m;
-    }
-
-
-    public function xml2array($fname){
-      $sxi      = new SimpleXmlIterator($fname);
-      return $this->sxiToArray($sxi);
-    }
-
-    public function sxiToArray($sxi){
-      $a = array();
-      for( $sxi->rewind(); $sxi->valid(); $sxi->next() ) {
-        if(!array_key_exists($sxi->key(), $a)){
-          $a[$sxi->key()]   = array();
-        }
-        if($sxi->hasChildren()){
-          $a[$sxi->key()][] = $this->sxiToArray($sxi->current());
-        }
-        else{
-          $a[$sxi->key()][] = strval($sxi->current());
-        }
-      }
-      return $a;
-    }
-
-    public function ligne($ref,$emp,$lot,$qte,$date){
-        $xml    =   '<PARAM>
-                        <GRP ID="IN">
-                            <FLD NAM="YITMREF">'.$ref.'</FLD>
-                        </GRP>
-                        <GRP ID="IN">
-                            <FLD NAM="YFCY">'.$this->site.'</FLD>
-                        </GRP>
-                        <GRP ID="IN">
-                            <FLD NAM="YLOC">'.$emp.'</FLD>
-                        </GRP>
-                        <GRP ID="IN">
-                            <FLD NAM="YLOT">'.$lot.'</FLD>
-                        </GRP>
-                        <GRP ID="IN">
-                            <FLD NAM="YQTY">'.$qte.'</FLD>
-                        </GRP>
-                        <GRP ID="IN">
-                            <FLD NAM="YDATPER">'.$date.'</FLD>
-                        </GRP>
-                    </PARAM>';
-        $xml    = $this->preg_replace_($xml);
-        return $xml;
-    }
-
-    public function soap_API2($array){
-        $soapClient = new SoapClient(
-            $this->url_soap,
-            array(
-                'trace'    => true,
-                'login'    => $this->login,
-                'password' => $this->password,
-            )
-        );
-        $m = $ligne = "";
-        $i = 1;
-        if (is_array($array) || is_object($array)) {
-            foreach ($array as $key=>$value) {
-                $exp   = explode('-----',$value);
-                $emp   = explode(' - ',$exp[0]);
-                $ref   = $key;
-                $lot   = $exp[1];
-                $qte   = $exp[2];
-                $ligne .= $this->ligne_sortie($ref,$emp[0],$lot,$qte,$i);
-                $i++;
+            while($row = sqlsrv_fetch_array($resultat, SQLSRV_FETCH_ASSOC)){
+                $data[] = $row;
             }
+            return $data;
+        }        
+    }
+
+    public function getSession($num){
+        $queryParams    = $data = array();
+        $queryOptions   = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
+        $query          = " SELECT 
+                                'S' AS 'A'
+                                ,[ligne] AS 'B'
+                                ,CONVERT(NUMERIC(28,0),[qte]) AS 'C'
+                                ,CONVERT(NUMERIC(28,0),[qty]) AS 'D'
+                                ,[val_qte] AS 'E'
+                                ,[reference] AS 'G'
+                                ,[designation] AS 'H'      
+                                ,[unite] AS 'I'
+                                ,[coef] AS 'J'
+                                ,[lot] AS 'K'
+                                ,[emplacement] AS 'L'
+                                ,[sta_st] AS 'M'
+                                ,ISNULL([dlvdate],'') AS 'N'
+                            FROM 
+                               invSession invL
+                            WHERE
+                                nLigne = '".$num."'
+                            ORDER BY
+                                ligne ASC ";
+
+        $resultat       = sqlsrv_query($this->link2, $query, $queryParams, $queryOptions);
+        if ($resultat == FALSE) {
+            var_dump(sqlsrv_errors());
+            return false;
+        } elseif (sqlsrv_num_rows($resultat) == 0) {
+            return false;
+        } else {
+            while($row = sqlsrv_fetch_array($resultat, SQLSRV_FETCH_ASSOC)){
+                if($row["B"]==0){
+                    $row["B"] = "";
+                }
+                $data[] = $row;
+            }
+            return $data;
         }
         
-        $inputXml      = '<PARAM>
-                            <GRP ID="IN">
-                                <FLD NAM="YSTOFCY">'.$this->site.'</FLD>
-                                <FLD NAM="YCODEFAM">'.$this->codeFamille.'</FLD>
-                            </GRP>
-                            <TAB ID="IND">
-                                '.$ligne.'
-                            </TAB>
-                        </PARAM>';
-        $inputXml      = $this->preg_replace_($inputXml);
+    }
 
-        $context    = array('codeLang'=>$this->codeLang, 'poolAlias'=>$this->poolAlias,'poolId'=>'','requestConfig'=>'adxwss.trace.on=on&adxwss.trace.size=16384&adonix.trace.on=on&adonix.trace.level=3&adonix.trace.size=8');
+    public function getInvEmp($num){
+        $queryParams    = array();
+        $queryOptions   = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
+        $query          = " SELECT 
+                                TOP 1 emplacement
+                            FROM 
+                                invSession invL
+                            WHERE
+                                invL.site = '".$this->site."'
+                                AND invL.nLigne = '".$num."' ";
 
-        $result     = $soapClient->__call("run",array($context,'YGENSOR',$inputXml));
-        $xml        = simplexml_load_string($result->resultXml);
-
-        $message    = $xml->GRP[1];
-
-        foreach ($message as $val) {
-            $m = $val;
+        $resultat       = sqlsrv_query($this->link2, $query, $queryParams, $queryOptions);
+        if ($resultat == FALSE) {
+            var_dump(sqlsrv_errors());
+            return false;
+        } elseif (sqlsrv_num_rows($resultat) == 0) {
+            return false;
+        } else {
+            $row  = sqlsrv_fetch_array($resultat, SQLSRV_FETCH_ASSOC);
+            return $row['emplacement'];
         }
-
-        return $m;
     }
 
-    public function ligne_sortie($ref,$emp,$lot,$qte,$i){
-        $xml    =   '<LIN ID="IND" NUM="'.$i.'">
-                        <FLD NAM="YITMREF">'.$ref.'</FLD>
-                        <FLD NAM="YQTY">'.$qte.'</FLD>
-                        <FLD NAM="YEMP">'.$emp.'</FLD>
-                        <FLD NAM="YLOT">'.$lot.'</FLD>
-                    </LIN>';
-        $xml    = $this->preg_replace_($xml);
-        return $xml;
-    }
-
-    public function InsertSortie($n){
-        $return = 0;
-        $query  = "INSERT INTO [dbo].[historique_mvt_sortie] ([num]) VALUES ('".$n."')";
-        if(sqlsrv_query($this->link2, $query)){
-            $return = 1;
-        }
-        return $return;
-    }
-
-    public function getDesignation($num){
+    public function getArticleX3($num){
         $queryParams    = $data = array();
         $queryOptions   = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
-        $query          = " SELECT ITMDES1_0 AS DESS FROM [ZITMMASTER] WHERE ITMREF_0 = '".$num."' ";
-
+        $query          = " SELECT * FROM [ZITMMASTER] WHERE ITMREF_0 = '".$num."' OR YBPSEAN_0 = '".$num."' ";
         $resultat       = sqlsrv_query($this->link, $query, $queryParams, $queryOptions);
         if ($resultat == FALSE) {
             var_dump(sqlsrv_errors());
             return false;
         } else {
-            $row = sqlsrv_fetch_array($resultat, SQLSRV_FETCH_ASSOC);
-            return $row["DESS"];
+            while($row = sqlsrv_fetch_array($resultat, SQLSRV_FETCH_ASSOC)){
+                $data[] = $row;
+            }
         }
+        return $data;
     }
 
-    public function ligne_($array){
+    public function traitementInv($num,$data){
         $msg = "";
-        if (is_array($array) || is_object($array)) {
-            foreach ($array as $key=>$value) {
-                $exp   = explode('-----',$value);
-                $emp   = explode(' - ',$exp[0]);
-                $ref   = $key;
-                $lot   = $exp[1];
-                $qte   = $exp[2];
-                $dess  = $this->getDesignation($ref);
-                $msg   .= '<strong>Réference :</strong> '.$ref.' - '.$dess.' ---> <strong>Quantité:</strong> '.$qte.'<br>';
+        if (is_array($data) || is_object($data)) {
+            foreach ($data as $key=>$qte) {
+                $update = $insert = "";
+                $exp = explode("&&&&&&",$key);
+                $ln  = $exp[0];
+                $ref = $exp[1];
+                if(trim($ln) == ""){
+                    $insert = $this->InsertLigneNouveau($num,$ref,$qte);
+                    if($insert == $num)
+                        $msg .= $ref.": Insertion effectuée avec succès!!";
+                    else    
+                        $msg .= $ref.": ".$insert;
+                }
+                else{
+                    $update = $this->updateInv($num,$ref,$qte);
+                    if($update == $num)
+                        $msg .= $ref.": Mise à jour effectuée avec succès!!";
+                    else    
+                        $msg .= $ref.": ".$update;
+                }
             }
         }
         return $msg;
     }
 
-    public function mail($e,$l){
-        $sujet   = "Mouvement de sortie KIBO";
-        $objet   = "Bonjour,<br><br>";
-        $objet  .= "Un mouvement de sortie a été crée dans sage X3.<br>";
-        $objet  .= "Ci-après les details du document:<br><br>";
-        $objet  .= "<strong>N° :</strong>".$e."<br>";
-        $objet  .= $l."<br><br>";
-        $objet  .= "<strong>Cordialement</strong><br>
-                    <strong>Winny Tsiorintsoa RAZAFINDRAKOTO</strong><br>
-                    <strong>DEVELOPPEUR</strong><br>
-                    Lot II I 20 AA Morarano<br>
-                    Antananarivo – MADAGASCAR<br>
-                    Tél. : +261 34 07 635 84<br>
-                    Tél. : +261 20 22 530 81<br>
-                    Fax : +261 20 22 530 80<br>
-                    Mail : winny.devinfo@talys.mg<br>
-                    Site : www.kibo.mg<br>";
-        
-        envoiMail($sujet,$objet);
+    public function addLigneInv($num,$ref,$qte){
+        $donnee = $this->getArticleX3($ref);
+        $emp    = $this->getInvEmp($num);
+        $table  = '<tr id="session" class="table-success bold">';
+            $table .= '<td></td>';
+            $table .= '<td><input type ="number" value="'.$qte.'"></td>';
+            $table .= '<td>'.$donnee[0]['YBPSEAN_0'].'</td>';
+            $table .= '<td>'.$donnee[0]['ITMREF_0'].'</td>';
+            $table .= '<td>'.$donnee[0]['ITMDES1_0'].'</td>';
+            $table .= '<td>'.$donnee[0]['STU_0'].'</td>';
+            $table .= '<td>XXX</td>';
+            $table .= '<td>'.$emp.'</td>';
+            $table .= '<td><a class="delete" aria-label="Supprimer" title="Supprimer"><i class="fa fa-trash-o supp" aria-hidden="true"></i></a></td>';
+        $table .= '</tr>';
+        return $table;
     }
 
+    public function getDetailInv($num){
+        $donnee = $this->getInv($num);
+        $table  = "";
+        if (is_array($donnee) || is_object($donnee)) {
+            $table .= "<h3 class='text-titre'>Détail de l'inventaire</h3>";
+            $table .= '<table class="table detail table-borderless">';
+            $table .= '<tr class="bg-warning">';
+                $table .= '<td>'.$donnee[0]['nEntete'].'</td>';
+                $table .= '<td>'.$donnee[0]['site'].'</td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+            $table .= '</tr>';
+            $table .= '<tr>';
+                $table .= '<td><span class="jaune nLigne">'.$donnee[0]['nLigne'].'</span></td>';
+                $table .= '<td><input id="recherche_" class="form-control" placeholder="Référence, Codebarre"></td>';
+                $table .= '<td><input type="number" id="qte_" class="form-control"></td>';
+                $table .= '<td><button type="button" class="btn btn-primary ajouter">Ajouter</button></td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+                $table .= '<td></td>';
+            $table .= '</tr>';
+            foreach($donnee as $val){
+                $table .= '<tr id="session">';
+                    $table .= '<td>'.$val['ligne'].'</td>';
+                    $table .= '<td><input type ="number" value="'.number_format($val['qte'], 0, '.', '').'"></td>';
+                    $table .= '<td>'.$val['codebarre'].'</td>';
+                    $table .= '<td>'.$val['reference'].'</td>';
+                    $table .= '<td>'.$val['designation'].'</td>';
+                    $table .= '<td>'.$val['unite'].'</td>';
+                    $table .= '<td>'.$val['lot'].'</td>';
+                    $table .= '<td>'.$val['emplacement'].'</td>';
+                    $table .= '<td><a class="delete" aria-label="Supprimer" title="Supprimer"><i class="fa fa-trash-o supp" aria-hidden="true"></i></a></td>';
+                $table .= '</tr>';
+            }
+            $table .= '</table>';
+            $table .= '<button type="button" class="btn btn-primary valider">EXPORTER</button>';
+        }
+        return $table;
+    }
 
+    public function updateInv($nLigne,$ref,$qte){
+        $val_qte = ($qte > 0) ? '1' : '2';
+        $query = "UPDATE 
+                    [dbo].[invSession] 
+                    SET [qte] = '".$qte."',
+                        [qty] = '".$qte."',
+                        [val_qte] = '".$val_qte."',
+                        [date_modification] = GETDATE()
+                    WHERE
+                        [nLigne] = '".$nLigne."'
+                        AND [reference] = '".$ref."'; ";
+
+        if(sqlsrv_query($this->link2, $query)) return $nLigne;
+    }
+
+    public function InsertEntete($nEntete,$nLigne,$nSite,$utilisateur){
+        $query = "INSERT INTO [dbo].[invEntete]
+                    ([nEntete]
+                    ,[nLigne]
+                    ,[site]
+                    ,[utilisateur]
+                    ,[statut])
+                 VALUES 
+                 ('".$nEntete."','".$nLigne."','".$nSite."','".$utilisateur."','0')";
+
+        if(sqlsrv_query($this->link2, $query)) return $nEntete;
+    }
+
+    public function InsertLigne($nLigne,$nSite,$utilisateur,$array){
+        $m   = $val = $cb = "";
+        $end = end($array);
+        if (is_array($array) || is_object($array)) {
+            foreach ($array as $value) {
+                $cb = $this->getArticleX3($value[5]);
+                $val_qte = ($value[2] > 0) ? '1' : '2';
+                if($value == $end){
+                    $m = ";";
+                }
+                else{
+                    $m = ",";
+                }
+                $val   .= "('".$nLigne."','".$nSite."','".$value[1]."','".$value[5]."','".$value[6]."','".$value[2]."','".$value[3]."','".$val_qte."','".$cb[0]["YBPSEAN_0"]."','".$value[7]."','".$value[9]."','".$value[10]."','".$value[11]."','".$value[8]."','".$utilisateur."','".$this->getUserIpAddr()."','0')".$m;
+            }
+        }
+
+        $query = "INSERT INTO [dbo].[invSession]
+                    ([nLigne]
+                    ,[site]
+                    ,[ligne]
+                    ,[reference]
+                    ,[designation]
+                    ,[qte]
+                    ,[qty]
+                    ,[val_qte]
+                    ,[codebarre]
+                    ,[unite]
+                    ,[lot]
+                    ,[emplacement]
+                    ,[sta_st]
+                    ,[coef]
+                    ,[utilisateur]
+                    ,[ip_adresse]
+                    ,[statut])
+                 VALUES ".$val;
+
+        if(sqlsrv_query($this->link2, $query)){
+            return $nLigne;
+        }
+    }
+
+    public function InsertLigneNouveau($nLigne,$ref,$qte){
+        $donnee  = $this->getArticleX3($ref);
+        $val     = "";
+        $emp     = $this->getInvEmp($nLigne);
+        $val_qte = ($qte > 0) ? '1' : '2';
+        $val     .= "('".$nLigne."','".$this->site."','','".$ref."','".$donnee[0]["ITMDES1_0"]."','".$qte."','".$qte."','".$val_qte."','".$donnee[0]["YBPSEAN_0"]."','".$donnee[0]["STU_0"]."','XXX','".$emp."','A','1','".$this->user."','".$this->getUserIpAddr()."','0','31/12/2099');";
+
+        $query = "INSERT INTO [dbo].[invSession]
+                    ([nLigne]
+                    ,[site]
+                    ,[ligne]
+                    ,[reference]
+                    ,[designation]
+                    ,[qte]
+                    ,[qty]
+                    ,[val_qte]
+                    ,[codebarre]
+                    ,[unite]
+                    ,[lot]
+                    ,[emplacement]
+                    ,[sta_st]
+                    ,[coef]
+                    ,[utilisateur]
+                    ,[ip_adresse]
+                    ,[statut]
+                    ,[dlvdate])
+                 VALUES ".$val;
+
+        if(sqlsrv_query($this->link2, $query)){
+            return $nLigne;
+        }
+    }
+
+    public function getUserIpAddr(){
+        if(!empty($_SERVER['HTTP_CLIENT_IP'])){
+            $ip = $_SERVER['HTTP_CLIENT_IP'];
+        }elseif(!empty($_SERVER['HTTP_X_FORWARDED_FOR'])){
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        }else{
+            $ip = $_SERVER['REMOTE_ADDR'];
+        }
+        return $ip;
+    }
+
+    public function csv_to_array($csv_file){
+        if (($handle = fopen($csv_file, 'r')) !== false) {
+            $arr    = array();
+            while (($data = fgetcsv($handle, 1005)) !== false) {
+                $line = array();
+                foreach($data as $d){
+                    $line = array_merge($line, str_getcsv($d, ';'));
+                }
+                $arr[] = $line;
+            }
+            fclose($handle);
+            return $arr;
+        }
+    }
+
+    public function upload_csv($file){
+        $uploadFolder = "uploads/";
+        $fileName     = basename($_FILES["file"]["name"]);
+        $fileType     = pathinfo($_FILES["file"]["name"],PATHINFO_EXTENSION);
+        $fileType     = strtolower($fileType);
+        $allowTypes   = array('csv'); 
+        $msg          = "";
+
+        if(in_array($fileType,$allowTypes)){
+            if(move_uploaded_file($_FILES["file"]["tmp_name"],$uploadFolder.$fileName)){
+                $msg = "<div class='alert alert-success'><b>$fileName</b> Téléchargement réussi</div>";
+            }else{
+                $msg = "<div class='alert alert-danger'><b>$fileName</b> Échec du téléchargement. Essayer à nouveau.</div>";
+            }
+        }else{
+            $msg = "<div class='alert alert-danger'>Échec du téléchargement. <b>$fileType</b> Fichier non autorisé.</div>";
+        }
+        return $msg;
+        
+    }
 }
 ?>
